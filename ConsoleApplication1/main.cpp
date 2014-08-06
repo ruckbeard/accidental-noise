@@ -75,7 +75,9 @@ void main() {
 	cavepreturb[10] = 0.48;
 	cavepreturb[11] = 0;
 
-	map_file(lowlands, highlands, mountain, terrain, caveshape, cavepreturb, 256, 256, 0);
+	map_file(800, 200);
+
+	map_file2(lowlands, highlands, mountain, terrain, caveshape, cavepreturb, 800, 200, 0);
 
 	map_test(700, 300);
 	map_test2();

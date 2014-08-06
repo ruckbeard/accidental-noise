@@ -11,7 +11,144 @@ using namespace anl;
 
 double map[10000][10000];
 
-ANLIBEXPORT double map_file(double lowlands_i[11], double highlands_i[11], double mountains_i[11], double terrain_i[14], double caveshape_i[8], double cavepreturb_i[12], double map_x_size, double map_y_size, double seamless) {
+ANLIBEXPORT double map_file(double map_x_size, double map_y_size) {
+
+	CImplicitGradient ground_gradient;
+	ground_gradient.setGradient(0, 0, 0, 1);
+
+#pragma region lowlands
+
+	CImplicitFractal lowland_shape_fractal(BILLOW, GRADIENT, QUINTIC);
+	lowland_shape_fractal.setNumOctaves(2);
+	lowland_shape_fractal.setFrequency(0.25);
+	//lowland_shape_fractal.setSeed(lowlands_i[5]);
+	CImplicitAutoCorrect lowland_autocorrect(0, 1);
+	lowland_autocorrect.setSource(&lowland_shape_fractal);
+	CImplicitScaleOffset lowland_scale(0.125, -0.45);
+	lowland_scale.setSource(&lowland_autocorrect);
+	CImplicitScaleDomain lowland_y_scale(NULL, 0);
+	lowland_y_scale.setSource(&lowland_scale);
+	CImplicitTranslateDomain lowland_terrain;
+	lowland_terrain.setSource(&ground_gradient);
+	lowland_terrain.setYAxisSource(&lowland_y_scale);
+#pragma endregion
+
+#pragma region highlands
+	CImplicitFractal highland_shape_fractal(FBM, GRADIENT, QUINTIC);
+	highland_shape_fractal.setNumOctaves(4);
+	highland_shape_fractal.setFrequency(2);
+	//highland_shape_fractal.setSeed(int(highlands_i[5]));
+	CImplicitAutoCorrect highland_autocorrect(-1, 1);
+	highland_autocorrect.setSource(&highland_shape_fractal);
+	CImplicitScaleOffset highland_scale(0.25, 0);
+	highland_scale.setSource(&highland_autocorrect);
+	CImplicitScaleDomain highland_y_scale(NULL, 0);
+	highland_y_scale.setSource(&highland_scale);
+	CImplicitTranslateDomain highland_terrain;
+	highland_terrain.setSource(&ground_gradient);
+	highland_terrain.setYAxisSource(&highland_y_scale);
+#pragma endregion
+
+#pragma region mountains
+	CImplicitFractal mountain_shape_fractal(RIDGEDMULTI, GRADIENT, QUINTIC);
+	mountain_shape_fractal.setNumOctaves(8);
+	mountain_shape_fractal.setFrequency(1);
+	//mountain_shape_fractal.setSeed(int(mountains_i[5]));
+	CImplicitAutoCorrect mountain_autocorrect(-1, 1);
+	mountain_autocorrect.setSource(&mountain_shape_fractal);
+	CImplicitScaleOffset mountain_scale(0.45, 0.15);
+	mountain_scale.setSource(&mountain_autocorrect);
+	CImplicitScaleDomain mountain_y_scale(NULL, 0.25);
+	mountain_y_scale.setSource(&mountain_scale);
+	CImplicitTranslateDomain mountain_terrain;
+	mountain_terrain.setSource(&ground_gradient);
+	mountain_terrain.setYAxisSource(&mountain_y_scale);
+#pragma endregion
+
+#pragma region terrain
+	CImplicitFractal terrain_type_fractal(FBM, GRADIENT, QUINTIC);
+	terrain_type_fractal.setNumOctaves(3);
+	terrain_type_fractal.setFrequency(0.125);
+	//terrain_type_fractal.setSeed(int(terrain_i[5]));
+	CImplicitAutoCorrect terrain_autocorrect(0, 1);
+	terrain_autocorrect.setSource(&terrain_type_fractal);
+	CImplicitScaleDomain terrain_type_y_scale(NULL, 0);
+	terrain_type_y_scale.setSource(&terrain_autocorrect);
+	CImplicitCache terrain_type_cache;
+	terrain_type_cache.setSource(&terrain_type_y_scale);
+	CImplicitSelect highland_mountain_select;
+	highland_mountain_select.setLowSource(&highland_terrain);
+	highland_mountain_select.setHighSource(&mountain_terrain);
+	highland_mountain_select.setControlSource(&terrain_type_cache);
+	highland_mountain_select.setThreshold(0.55);
+	highland_mountain_select.setFalloff(0.2);
+	CImplicitSelect highland_lowland_select;
+	highland_lowland_select.setLowSource(&lowland_terrain);
+	highland_lowland_select.setHighSource(&highland_mountain_select);
+	highland_lowland_select.setControlSource(&terrain_type_cache);
+	highland_lowland_select.setThreshold(0.25);
+	highland_lowland_select.setFalloff(0.15);
+	CImplicitCache highland_lowland_select_cache;
+	highland_lowland_select_cache.setSource(&highland_lowland_select);
+	CImplicitSelect ground_select;
+	ground_select.setHighSource(1);
+	ground_select.setThreshold(0.5);
+	ground_select.setControlSource(&highland_lowland_select_cache);
+#pragma endregion
+
+#pragma region caves
+	CImplicitFractal cave_shape(RIDGEDMULTI, GRADIENT, QUINTIC);
+	cave_shape.setNumOctaves(1);
+	cave_shape.setFrequency(4);
+	//cave_shape.setSeed(int(caveshape_i[5]));
+	CImplicitBias cave_attenuate_bias(0.45);
+	cave_attenuate_bias.setSource(&highland_lowland_select_cache);
+	CImplicitCombiner cave_shape_attenuate(MULT);
+	cave_shape_attenuate.setSource(0, &cave_shape);
+	cave_shape_attenuate.setSource(1, &cave_attenuate_bias);
+
+	CImplicitFractal cave_preturb_fractal(FBM, GRADIENT, QUINTIC);
+	cave_preturb_fractal.setNumOctaves(6);
+	cave_preturb_fractal.setFrequency(3);
+	//cave_preturb_fractal.setSeed(int(cavepreturb_i[5]));
+	CImplicitScaleOffset cave_preturb_scale(0.5, 0);
+	cave_preturb_scale.setSource(&cave_preturb_fractal);
+	CImplicitTranslateDomain cave_preturb;
+	cave_preturb.setSource(&cave_shape_attenuate);
+	cave_preturb.setXAxisSource(&cave_preturb_scale);
+	CImplicitSelect cave_select;
+	cave_select.setLowSource(1);
+	cave_select.setThreshold(0.48);
+	cave_select.setControlSource(&cave_preturb);
+#pragma endregion
+
+	CImplicitCombiner ground_cave_multiply(MULT);
+	ground_cave_multiply.setSource(0, &cave_select);
+	ground_cave_multiply.setSource(1, &ground_select);
+
+	CRGBACompositeChannels composite1;
+	composite1.setRedSource(&ground_cave_multiply);
+	composite1.setGreenSource(&ground_cave_multiply);
+	composite1.setBlueSource(&ground_cave_multiply);
+	composite1.setAlphaSource(1.0);
+
+	SMappingRanges ranges;
+
+	TArray2D<double> file(map_x_size, map_y_size);
+	TArray2D<SRGBA> img(map_x_size, map_y_size);
+
+	std::string filename = "chuck.png";
+
+	map2D(SEAMLESS_NONE, file, ground_cave_multiply, ranges, 0);
+	saveDoubleArray("map.tga", &file);
+
+	mapRGBA2D(SEAMLESS_NONE, img, composite1, ranges, 0);
+	savePNG(filename, &img);
+
+	return 2;
+}
+
+ANLIBEXPORT double map_file2(double lowlands_i[11], double highlands_i[11], double mountains_i[11], double terrain_i[14], double caveshape_i[8], double cavepreturb_i[12], double map_x_size, double map_y_size, double seamless) {
 
 	CImplicitGradient ground_gradient;
 	ground_gradient.setGradient(0, 0, 0, 1);
@@ -49,7 +186,7 @@ ANLIBEXPORT double map_file(double lowlands_i[11], double highlands_i[11], doubl
 	CImplicitScaleOffset highland_scale(highlands_i[8], highlands_i[9]);
 	highland_scale.setSource(&highland_autocorrect);
 	CImplicitScaleDomain highland_y_scale(NULL, highlands_i[10]);
-	highland_y_scale.setSource(&highland_autocorrect);
+	highland_y_scale.setSource(&highland_scale);
 	CImplicitTranslateDomain highland_terrain;
 	highland_terrain.setSource(&ground_gradient);
 	highland_terrain.setYAxisSource(&highland_y_scale);
@@ -71,7 +208,7 @@ ANLIBEXPORT double map_file(double lowlands_i[11], double highlands_i[11], doubl
 	CImplicitScaleOffset mountain_scale(mountains_i[8], mountains_i[9]);
 	mountain_scale.setSource(&mountain_autocorrect);
 	CImplicitScaleDomain mountain_y_scale(NULL, mountains_i[10]);
-	mountain_y_scale.setSource(&mountain_autocorrect);
+	mountain_y_scale.setSource(&mountain_scale);
 	CImplicitTranslateDomain mountain_terrain;
 	mountain_terrain.setSource(&ground_gradient);
 	mountain_terrain.setYAxisSource(&mountain_y_scale);
@@ -143,7 +280,7 @@ ANLIBEXPORT double map_file(double lowlands_i[11], double highlands_i[11], doubl
 	cave_preturb_scale.setSource(&cave_preturb_fractal);
 	CImplicitTranslateDomain cave_preturb;
 	cave_preturb.setSource(&cave_shape_attenuate);
-	cave_preturb.setXAxisSource(&cave_preturb_scale);
+	cave_preturb.setYAxisSource(&cave_preturb_scale);
 	CImplicitSelect cave_select;
 	cave_select.setControlSource(&cave_preturb);
 	cave_select.setLowSource(cavepreturb_i[8]);
@@ -167,10 +304,10 @@ ANLIBEXPORT double map_file(double lowlands_i[11], double highlands_i[11], doubl
 	TArray2D<double> file(map_x_size, map_y_size);
 	TArray2D<SRGBA> img(map_x_size, map_y_size);
 
-	std::string filename = "chuck.png";
+	std::string filename = "chuck2.png";
 	
 	map2D(seamless, file, ground_cave_multiply, ranges, 0);
-	saveDoubleArray("map.tga", &file);
+	saveDoubleArray("map2.tga", &file);
 
 	mapRGBA2D(seamless, img, composite1, ranges, 0);
 	savePNG(filename, &img);
