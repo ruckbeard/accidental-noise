@@ -1,7 +1,7 @@
 #ifndef IMPLICIT_MODIFIER_H
 #define IMPLICIT_MODIFIER_H
 #include "implicitmodulebase.h"
-#include "utility.h"
+#include "../utility.h"
 #include "../curvetypes.h"
 
 // Modules that modify the output of a function

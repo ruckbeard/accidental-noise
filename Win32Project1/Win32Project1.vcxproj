@@ -54,6 +54,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;WIN32PROJECT1_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\Chum\Documents\Visual Studio 2013\Projects\ConsoleApplication1\Win32Project1\templates;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -187,7 +188,6 @@
     <ClCompile Include="rasterization.cpp" />
     <ClCompile Include="rgbablend.cpp" />
     <ClCompile Include="rgbablendops.cpp" />
-    <ClCompile Include="rgbacolorops.cpp" />
     <ClCompile Include="rgbacomposechannels.cpp" />
     <ClCompile Include="rgbaconstant.cpp" />
     <ClCompile Include="rgbacurve.cpp" />

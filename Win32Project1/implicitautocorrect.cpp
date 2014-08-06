@@ -5,7 +5,7 @@ namespace anl
 {
 
     CImplicitAutoCorrect::CImplicitAutoCorrect() : m_source(0), m_low(-1.0), m_high(1.0){}
-	CImplicitAutoCorrect::CImplicitAutoCorrect(double low, double high) : m_source(0), m_low(low), m_high(high){}
+    CImplicitAutoCorrect::CImplicitAutoCorrect(double low, double high) : m_source(0), m_low(low), m_high(high){}
 
     void CImplicitAutoCorrect::setSource(CImplicitModuleBase *m)
     {

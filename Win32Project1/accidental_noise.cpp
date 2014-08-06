@@ -6,27 +6,24 @@
 #include <Windows.h>
 #include <string>
 using namespace anl;
-#define ANLIBEXPORT __declspec (dllexport)
-#define ANLIBIMPORT __declspec (dllimport)
 
 double map[10000][10000];
 
-ANLIBEXPORT double map_file(double map_x_size, double map_y_size) {
+double map_file(double map_x_size, double map_y_size) {
 
 	CImplicitGradient ground_gradient;
 	ground_gradient.setGradient(0, 0, 0, 1);
 
 #pragma region lowlands
-
 	CImplicitFractal lowland_shape_fractal(BILLOW, GRADIENT, QUINTIC);
 	lowland_shape_fractal.setNumOctaves(2);
 	lowland_shape_fractal.setFrequency(0.25);
-	//lowland_shape_fractal.setSeed(lowlands_i[5]);
-	CImplicitAutoCorrect lowland_autocorrect(0, 1);
+	CImplicitAutoCorrect lowland_autocorrect(0,1);
 	lowland_autocorrect.setSource(&lowland_shape_fractal);
 	CImplicitScaleOffset lowland_scale(0.125, -0.45);
 	lowland_scale.setSource(&lowland_autocorrect);
-	CImplicitScaleDomain lowland_y_scale(NULL, 0);
+	CImplicitScaleDomain lowland_y_scale;
+	lowland_y_scale.setYScale(0.0);
 	lowland_y_scale.setSource(&lowland_scale);
 	CImplicitTranslateDomain lowland_terrain;
 	lowland_terrain.setSource(&ground_gradient);
@@ -40,9 +37,10 @@ ANLIBEXPORT double map_file(double map_x_size, double map_y_size) {
 	//highland_shape_fractal.setSeed(int(highlands_i[5]));
 	CImplicitAutoCorrect highland_autocorrect(-1, 1);
 	highland_autocorrect.setSource(&highland_shape_fractal);
-	CImplicitScaleOffset highland_scale(0.25, 0);
+	CImplicitScaleOffset highland_scale(0.125, 0);
 	highland_scale.setSource(&highland_autocorrect);
-	CImplicitScaleDomain highland_y_scale(NULL, 0);
+	CImplicitScaleDomain highland_y_scale;
+	highland_y_scale.setYScale(0.0);
 	highland_y_scale.setSource(&highland_scale);
 	CImplicitTranslateDomain highland_terrain;
 	highland_terrain.setSource(&ground_gradient);
@@ -58,7 +56,8 @@ ANLIBEXPORT double map_file(double map_x_size, double map_y_size) {
 	mountain_autocorrect.setSource(&mountain_shape_fractal);
 	CImplicitScaleOffset mountain_scale(0.45, 0.15);
 	mountain_scale.setSource(&mountain_autocorrect);
-	CImplicitScaleDomain mountain_y_scale(NULL, 0.25);
+	CImplicitScaleDomain mountain_y_scale;
+	mountain_y_scale.setYScale(0.0);
 	mountain_y_scale.setSource(&mountain_scale);
 	CImplicitTranslateDomain mountain_terrain;
 	mountain_terrain.setSource(&ground_gradient);
@@ -72,7 +71,8 @@ ANLIBEXPORT double map_file(double map_x_size, double map_y_size) {
 	//terrain_type_fractal.setSeed(int(terrain_i[5]));
 	CImplicitAutoCorrect terrain_autocorrect(0, 1);
 	terrain_autocorrect.setSource(&terrain_type_fractal);
-	CImplicitScaleDomain terrain_type_y_scale(NULL, 0);
+	CImplicitScaleDomain terrain_type_y_scale;
+	terrain_type_y_scale.setYScale(0.0);
 	terrain_type_y_scale.setSource(&terrain_autocorrect);
 	CImplicitCache terrain_type_cache;
 	terrain_type_cache.setSource(&terrain_type_y_scale);
@@ -91,7 +91,8 @@ ANLIBEXPORT double map_file(double map_x_size, double map_y_size) {
 	CImplicitCache highland_lowland_select_cache;
 	highland_lowland_select_cache.setSource(&highland_lowland_select);
 	CImplicitSelect ground_select;
-	ground_select.setHighSource(1);
+	ground_select.setLowSource(0.0);
+	ground_select.setHighSource(1.0);
 	ground_select.setThreshold(0.5);
 	ground_select.setControlSource(&highland_lowland_select_cache);
 #pragma endregion
@@ -117,7 +118,8 @@ ANLIBEXPORT double map_file(double map_x_size, double map_y_size) {
 	cave_preturb.setSource(&cave_shape_attenuate);
 	cave_preturb.setXAxisSource(&cave_preturb_scale);
 	CImplicitSelect cave_select;
-	cave_select.setLowSource(1);
+	cave_select.setLowSource(1.0);
+	cave_select.setHighSource(0.0);
 	cave_select.setThreshold(0.48);
 	cave_select.setControlSource(&cave_preturb);
 #pragma endregion
@@ -148,7 +150,7 @@ ANLIBEXPORT double map_file(double map_x_size, double map_y_size) {
 	return 2;
 }
 
-ANLIBEXPORT double map_file2(double lowlands_i[11], double highlands_i[11], double mountains_i[11], double terrain_i[14], double caveshape_i[8], double cavepreturb_i[12], double map_x_size, double map_y_size, double seamless) {
+double map_file2(double lowlands_i[11], double highlands_i[11], double mountains_i[11], double terrain_i[14], double caveshape_i[8], double cavepreturb_i[12], double map_x_size, double map_y_size, double seamless) {
 
 	CImplicitGradient ground_gradient;
 	ground_gradient.setGradient(0, 0, 0, 1);
@@ -315,7 +317,7 @@ ANLIBEXPORT double map_file2(double lowlands_i[11], double highlands_i[11], doub
 	return 2;
 }
 
-ANLIBEXPORT double map_test(double map_x_size, double map_y_size) {
+double map_test(double map_x_size, double map_y_size) {
 	anl::CMWC4096 rnd;
 	rnd.setSeedTime();
 
@@ -425,11 +427,11 @@ ANLIBEXPORT double map_test(double map_x_size, double map_y_size) {
 	return 0;
 }
 
-ANLIBEXPORT double return_map(int x, int y) {
+double return_map(int x, int y) {
 	return map[x][y];
 }
 
-ANLIBEXPORT double map_test2() {
+double map_test2() {
 	anl::CMWC4096 rnd;
 	rnd.setSeedTime();
 	anl::CImplicitFractal frac1(anl::FBM, anl::GRADIENT, anl::QUINTIC);

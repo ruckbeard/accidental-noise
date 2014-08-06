@@ -3,7 +3,7 @@
 #include <vector>
 #include <stdexcept>
 #include <cmath>
-#include "../vectortypes.h"
+#include "vectortypes.h"
 
 namespace anl
 {

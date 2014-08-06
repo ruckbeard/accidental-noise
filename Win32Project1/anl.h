@@ -51,7 +51,6 @@
 
 #include "random_gen.h"
 #include "mapping.h"
-#include "lodepng.h"
 #include "arrayoperations.h"
 
 #include "vectortypes.h"
