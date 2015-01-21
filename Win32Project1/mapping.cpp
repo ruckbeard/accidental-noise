@@ -23,6 +23,8 @@ namespace anl
                 double r;
                 double nx,ny,nz,nw,nu,nv,val=0.0;
                 double dx, dy, dz;
+				float pct = ((x + y) / (w + h) * 100);
+				std::cout << pct << "%" << std::endl;
                 switch(seamlessmode)
                 {
                     case SEAMLESS_NONE:
@@ -30,7 +32,7 @@ namespace anl
                         nx=ranges.mapx0 + p*(ranges.mapx1-ranges.mapx0);
                         ny=ranges.mapy0 + q*(ranges.mapy1-ranges.mapy0);
                         nz=z;
-                        val=m.get(nx,ny,nz);
+                        val=m.get(nx * 4,ny * 2,nz);
                     } break;
                     case SEAMLESS_X:
                     {
@@ -345,6 +347,9 @@ namespace anl
         size_t x,y;
         for(x=0; x<w; ++x)
         {
+			double pct = ((double(x) / w) * 100);
+			std::cout << pct << "%" << std::endl;
+
             for(y=0; y<h; ++y)
             {
                 double p=(double)x / (double)w;
@@ -353,6 +358,8 @@ namespace anl
                 double nx,ny,nz,nw,nu,nv=0.0;
                 SRGBA val;
                 double dx, dy, dz;
+
+
                 switch(seamlessmode)
                 {
                     case SEAMLESS_NONE:
@@ -360,7 +367,7 @@ namespace anl
                         nx=ranges.mapx0 + p*(ranges.mapx1-ranges.mapx0);
                         ny=ranges.mapy0 + q*(ranges.mapy1-ranges.mapy0);
                         nz=z;
-                        val=m.get(nx,ny,nz);
+                        val=m.get(nx * 4,ny,nz);
                     } break;
                     case SEAMLESS_X:
                     {
@@ -781,6 +788,10 @@ int savePNG(std::string filename, TArray2D<SRGBA> * array) {
 	std::vector<unsigned char> image;
 	image.resize(width * height * 4);
 	for (unsigned y = 0; y < height; y++)
+	{
+	
+		double pct2 = double((y / height) * 100);
+		std::cout << pct2 << "%" << std::endl;
 	for (unsigned x = 0; x < width; x++)
 	{
 		anl::SRGBA val = array->get(x, y);
@@ -788,6 +799,8 @@ int savePNG(std::string filename, TArray2D<SRGBA> * array) {
 		image[4 * width * y + 4 * x + 1] = val[1] * 255;
 		image[4 * width * y + 4 * x + 2] = val[2] * 255;
 		image[4 * width * y + 4 * x + 3] = val[3] * 255;
+	}
+
 	}
 
 
